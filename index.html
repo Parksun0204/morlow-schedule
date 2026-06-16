@@ -3,346 +3,132 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Morlow 일정관리 · 드래그 가능시간 캘린더</title>
+<title>Morlow 일정관리 · 팀 가능시간 (집계 결과)</title>
 <style>
 :root { color-scheme: light; }
 * { box-sizing: border-box; }
-body {
-  font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Segoe UI", Roboto, sans-serif;
-  margin: 0; padding: 20px; background: #f7f8fa; color: #1f2430;
-  -webkit-user-select: none; user-select: none;
-}
+body { font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Segoe UI", Roboto, sans-serif; margin: 0; padding: 20px; background: #f7f8fa; color: #1f2430; }
 h1 { font-size: 20px; margin: 0 0 4px; }
-.sub { color: #6b7280; font-size: 13px; margin: 0 0 16px; }
+.sub { color: #6b7280; font-size: 13px; margin: 0 0 6px; }
+.snap { display:inline-block; font-size:11px; color:#15803d; background:#dcfce7; border:1px solid #bbf7d0; padding:2px 8px; border-radius:999px; margin-bottom:14px; }
 .panel { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
-.panel h2 { font-size: 14px; margin: 0 0 12px; color: #374151; display: flex; align-items: center; gap: 6px; }
-.controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
-.field { display: flex; flex-direction: column; gap: 4px; }
-.field label { font-size: 11px; color: #6b7280; }
-.field input, .field select { padding: 6px 8px; border: 1px solid #d1d5db; border-radius: 7px; font-size: 13px; background:#fff; }
-button { cursor: pointer; border: 1px solid #d1d5db; background: #fff; padding: 7px 12px; border-radius: 8px; font-size: 13px; color:#1f2430; }
-button:hover { background: #f3f4f6; }
-button.primary { background: #16a34a; color: #fff; border-color: #16a34a; }
-button.primary:hover { background: #15803d; }
-button.danger { color: #dc2626; }
-
-.users { display: flex; flex-wrap: wrap; gap: 8px; }
-.user-chip { display: flex; align-items: center; gap: 6px; padding: 5px 8px 5px 6px; border: 2px solid transparent; border-radius: 20px; background: #f3f4f6; font-size: 13px; cursor: pointer; }
-.user-chip.active { border-color: #111827; background:#fff; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
-.user-chip .dot { width: 14px; height: 14px; border-radius: 50%; flex: none; }
-.user-chip .rm { color:#9ca3af; font-weight:700; margin-left:2px; padding:0 2px; }
-.user-chip .rm:hover { color:#dc2626; }
-
-.grids { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; }
-.grid-block { flex: 1 1 340px; min-width: 300px; }
-.grid-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; color:#374151; }
-.grid-hint { font-size: 11px; color:#9ca3af; margin-bottom: 8px; }
-.scroll { overflow-x: auto; }
-table.cal { border-collapse: collapse; width: 100%; }
-table.cal th { font-size: 11px; color:#6b7280; font-weight: 600; padding: 4px 2px; text-align: center; white-space: nowrap; position: sticky; }
-table.cal td.timelbl { font-size: 11px; color:#6b7280; text-align: right; padding: 0 8px 0 2px; white-space: nowrap; width: 56px; }
-table.cal td.cell { width: 64px; height: 24px; border: 1px solid #e5e7eb; cursor: pointer; position: relative; }
-table.cal td.cell.hourtop { border-top: 1px solid #c7ccd4; }
-.cell .dots { display:flex; flex-wrap:wrap; gap:2px; padding:2px; }
-.cell .dots span { width: 9px; height: 9px; border-radius: 2px; }
-.cell .cnt { position:absolute; right:3px; bottom:1px; font-size:9px; color:#14532d; font-weight:700; opacity:.7; }
-.cell.allyes { outline: 2px solid #f59e0b; outline-offset: -2px; }
-.cell.allyes::after { content:"★"; position:absolute; left:3px; top:0; font-size:10px; color:#f59e0b; }
-
-.legend { display:flex; align-items:center; gap:10px; margin-top:10px; flex-wrap:wrap; font-size:12px; color:#6b7280; }
+.panel h2 { font-size: 14px; margin: 0 0 12px; color: #374151; }
+.evt { font-size:14px; color:#374151; margin-bottom:10px; }
+.evt b { color:#111827; }
+.users { display:flex; flex-wrap:wrap; gap:8px; }
+.user-chip { display:flex; align-items:center; gap:6px; padding:5px 10px; border-radius:20px; background:#f3f4f6; font-size:13px; }
+.user-chip .dot { width:12px; height:12px; border-radius:50%; }
+.scroll { overflow-x:auto; }
+table.cal { border-collapse: collapse; }
+table.cal th { font-size:12px; color:#6b7280; font-weight:600; padding:6px 10px; text-align:center; white-space:nowrap; }
+table.cal td.lbl { font-size:12px; color:#6b7280; text-align:right; padding:0 10px; white-space:nowrap; }
+table.cal td.cell { width:120px; height:46px; border:1px solid #e5e7eb; position:relative; vertical-align:middle; text-align:center; }
+table.cal td.cell.na { background:repeating-linear-gradient(45deg,#fafafa,#fafafa 6px,#f1f1f1 6px,#f1f1f1 12px); }
+.cell .names { font-size:11px; color:#14532d; line-height:1.3; padding:2px 4px; }
+.cell .cnt { position:absolute; right:4px; top:2px; font-size:10px; font-weight:700; color:#14532d; opacity:.65; }
+.cell.all { outline:2px solid #f59e0b; outline-offset:-2px; }
+.cell.all::after { content:"★"; position:absolute; left:4px; top:1px; font-size:11px; color:#f59e0b; }
+.legend { display:flex; align-items:center; gap:10px; margin-top:12px; font-size:12px; color:#6b7280; flex-wrap:wrap; }
 .legend .scale { display:flex; }
-.legend .scale i { width: 22px; height: 16px; display:inline-block; border:1px solid #e5e7eb; }
-
+.legend .scale i { width:24px; height:16px; display:inline-block; border:1px solid #e5e7eb; }
 .summary { display:flex; flex-wrap:wrap; gap:8px; }
 .summary .slot { background:#16a34a; color:#fff; padding:6px 10px; border-radius:8px; font-size:13px; font-weight:600; }
 .summary .none { color:#9ca3af; font-size:13px; }
 .best { font-size:13px; color:#374151; margin-bottom:8px; }
-.modes { display:flex; gap:6px; margin-bottom:8px; }
-.modes button.on { background:#111827; color:#fff; border-color:#111827; }
-.toolbar { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
-.tip { font-size:11px; color:#9ca3af; margin-top:6px; }
+.note { font-size:12px; color:#9ca3af; margin-top:8px; }
 </style>
 </head>
 <body>
-<h1>🥬 Morlow 일정관리 — 드래그 가능시간 캘린더</h1>
-<p class="sub">왼쪽 캘린더에서 <b>드래그</b>로 본인의 가능한 시간을 칠하세요. 오른쪽은 모두의 응답이 겹친 <b>초록 농도 히트맵</b>입니다 — <b>가장 진한 칸 = 전원 가능</b>(★).</p>
+<h1>🥬 Morlow 일정관리 — 팀 가능시간 (집계 결과)</h1>
+<p class="sub">📌 <b>보기 전용</b> 화면입니다. 입력은 Notion <b>③ 참가자 응답 폼</b>에서 하세요 — 제출하면 이 결과에 반영됩니다.</p>
+<span class="snap" id="snap"></span>
 
 <div class="panel">
-  <h2>① 참가자</h2>
+  <div class="evt" id="evt"></div>
   <div class="users" id="users"></div>
-  <div class="toolbar">
-    <input id="newUser" placeholder="이름 입력 후 추가" style="padding:7px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;">
-    <button onclick="addUser()">+ 참가자 추가</button>
-    <span class="tip">참가자를 선택(클릭)하면 왼쪽 캘린더가 그 사람의 입력 모드가 됩니다.</span>
-  </div>
-</div>
-
-<div class="grids">
-  <div class="grid-block">
-    <div class="grid-title">② 내 가능 시간 <span id="activeName" style="color:#16a34a"></span></div>
-    <div class="grid-hint">드래그하여 칠하기 / 다시 드래그하면 지워집니다.</div>
-    <div class="scroll"><table class="cal" id="editGrid"></table></div>
-  </div>
-
-  <div class="grid-block">
-    <div class="grid-title">③ 전체 결과 (겹침 히트맵)</div>
-    <div class="modes">
-      <button id="mHeat" class="on" onclick="setMode('heat')">초록 농도</button>
-      <button id="mUser" onclick="setMode('user')">유저별 색상</button>
-    </div>
-    <div class="scroll"><table class="cal" id="heatGrid"></table></div>
-    <div class="legend">
-      <span>적음</span>
-      <span class="scale" id="legendScale"></span>
-      <span>전원</span>
-      <span style="margin-left:8px;">★ = 전원 가능</span>
-    </div>
-  </div>
 </div>
 
 <div class="panel">
-  <h2>④ ✅ 모두가 가능한 시간</h2>
-  <div class="best" id="bestLine"></div>
+  <h2>📅 겹침 히트맵 (초록이 진할수록 많은 인원, ★ = 전원 가능)</h2>
+  <div class="scroll"><table class="cal" id="grid"></table></div>
+  <div class="legend"><span>적음</span><span class="scale" id="legend"></span><span>전원</span><span style="margin-left:8px;">★ = 전원 가능</span></div>
+</div>
+
+<div class="panel">
+  <h2>✅ 모두가 가능한 시간</h2>
+  <div class="best" id="best"></div>
   <div class="summary" id="summary"></div>
-</div>
-
-<div class="panel">
-  <h2>⚙️ 기간/시간 설정</h2>
-  <div class="controls">
-    <div class="field"><label>시작 날짜</label><input type="date" id="startDate"></div>
-    <div class="field"><label>종료 날짜</label><input type="date" id="endDate"></div>
-    <div class="field"><label>시작 시각</label><input type="number" id="startHour" min="0" max="23" style="width:70px"></div>
-    <div class="field"><label>종료 시각</label><input type="number" id="endHour" min="1" max="24" style="width:70px"></div>
-    <div class="field"><label>단위(분)</label><select id="slotMin"><option value="60">60</option><option value="30">30</option></select></div>
-    <button class="primary" onclick="applyConfig()">적용 (그리드 재생성)</button>
-    <button class="danger" onclick="resetAll()">전체 초기화</button>
-  </div>
-  <p class="tip">설정을 바꾸면 그리드가 새로 만들어집니다. 기존 응답 중 새 범위에 포함되는 시간은 유지됩니다.</p>
+  <div class="note" id="srcnote"></div>
 </div>
 
 <script>
-const COLORS = ["#2563eb","#dc2626","#d97706","#7c3aed","#0891b2","#db2777","#65a30d","#ea580c","#4f46e5","#0d9488"];
-const LS_KEY = "morlow_lettucemeet_v1";
-
-let state = load() || seed();
-
-function seed(){
-  const s = {
-    config: { startDate:"2026-06-20", endDate:"2026-06-22", startHour:17, endHour:22, slotMin:60 },
-    users: [
-      {id:"u1", name:"정규", color:COLORS[0]},
-      {id:"u2", name:"민지", color:COLORS[1]},
-      {id:"u3", name:"현우", color:COLORS[2]},
-      {id:"u4", name:"수빈", color:COLORS[3]},
-    ],
-    activeUser: "u1",
-    avail: {}, // userId -> [slotKey,...]
-    mode: "heat"
-  };
-  // seed availability (저녁대 위주) to demonstrate
-  s.avail = {
-    u1: ["2026-06-20T18:00","2026-06-20T19:00","2026-06-21T19:00","2026-06-21T20:00","2026-06-21T21:00"],
-    u2: ["2026-06-20T19:00","2026-06-21T19:00","2026-06-21T20:00","2026-06-22T19:00","2026-06-22T20:00"],
-    u3: ["2026-06-21T18:00","2026-06-21T19:00","2026-06-21T20:00","2026-06-21T21:00"],
-    u4: ["2026-06-20T19:00","2026-06-21T19:00","2026-06-21T20:00","2026-06-22T19:00"]
-  };
-  return s;
-}
-function save(){ localStorage.setItem(LS_KEY, JSON.stringify(state)); }
-function load(){ try { return JSON.parse(localStorage.getItem(LS_KEY)); } catch(e){ return null; } }
-
-// ---- helpers ----
-function pad(n){ return String(n).padStart(2,"0"); }
-function dateList(){
-  const out=[]; const s=new Date(state.config.startDate+"T00:00");
-  const e=new Date(state.config.endDate+"T00:00");
-  for(let d=new Date(s); d<=e; d.setDate(d.getDate()+1)) out.push(new Date(d));
-  return out;
-}
-function timeList(){
-  const out=[]; const {startHour,endHour,slotMin}=state.config;
-  for(let m=startHour*60; m<endHour*60; m+=Number(slotMin)) out.push(m);
-  return out;
-}
-function dISO(d){ return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); }
-function dLabel(d){ const w=["일","월","화","수","목","금","토"][d.getDay()]; return (d.getMonth()+1)+"/"+d.getDate()+"("+w+")"; }
-function tLabel(m){ return pad(Math.floor(m/60))+":"+pad(m%60); }
-function slotKey(d,m){ return dISO(d)+"T"+tLabel(m); }
-function setHas(uid,key){ return (state.avail[uid]||[]).includes(key); }
-
-// ---- rendering ----
-function renderUsers(){
-  const el=document.getElementById("users"); el.innerHTML="";
-  state.users.forEach(u=>{
-    const c=document.createElement("div");
-    c.className="user-chip"+(u.id===state.activeUser?" active":"");
-    c.innerHTML=`<span class="dot" style="background:${u.color}"></span><span>${escapeHtml(u.name)}</span><span class="rm" title="삭제">×</span>`;
-    c.onclick=(e)=>{ if(e.target.classList.contains("rm")){ removeUser(u.id); return;} state.activeUser=u.id; save(); renderAll(); };
-    el.appendChild(c);
-  });
-  const a=state.users.find(u=>u.id===state.activeUser);
-  document.getElementById("activeName").textContent = a? "· "+a.name : "";
-}
-
-function buildGrid(table, editable){
-  const days=dateList(), times=timeList();
-  let html="<thead><tr><th></th>";
-  days.forEach(d=> html+=`<th>${dLabel(d)}</th>`);
-  html+="</tr></thead><tbody>";
-  times.forEach(m=>{
-    const top = (m%60===0)?" hourtop":"";
-    html+=`<tr><td class="timelbl">${tLabel(m)}</td>`;
-    days.forEach(d=>{
-      const key=slotKey(d,m);
-      html+=`<td class="cell${top}" data-key="${key}"></td>`;
-    });
-    html+="</tr>";
-  });
-  html+="</tbody>";
-  table.innerHTML=html;
-}
-
-function paintEditGrid(){
-  const uid=state.activeUser;
-  document.querySelectorAll("#editGrid td.cell").forEach(td=>{
-    const on=setHas(uid,td.dataset.key);
-    const u=state.users.find(x=>x.id===uid);
-    td.style.background = on ? u.color : "#fff";
-    td.style.opacity = on ? "0.85" : "1";
-  });
-}
-
-function countAt(key){
-  let c=0, names=[];
-  state.users.forEach(u=>{ if(setHas(u.id,key)){ c++; names.push(u); } });
-  return {c, names};
-}
-
-function paintHeatGrid(){
-  const total=state.users.length;
-  document.querySelectorAll("#heatGrid td.cell").forEach(td=>{
-    const {c,names}=countAt(td.dataset.key);
-    td.innerHTML=""; td.classList.remove("allyes"); td.style.background="#fff"; td.title="";
-    if(c===0) return;
-    if(state.mode==="heat"){
-      const alpha = 0.12 + 0.73*(c/total);   // 진할수록 많은 인원, 전원이면 가장 진함
-      td.style.background = `rgba(22,163,74,${alpha.toFixed(3)})`;
-      td.innerHTML = `<span class="cnt">${c}</span>`;
-    } else {
-      const wrap=document.createElement("div"); wrap.className="dots";
-      names.forEach(n=>{ const s=document.createElement("span"); s.style.background=n.color; s.title=n.name; wrap.appendChild(s); });
-      td.appendChild(wrap);
-    }
-    td.title = names.map(n=>n.name).join(", ") + ` (${c}/${total})`;
-    if(c===total && total>0) td.classList.add("allyes");
-  });
-}
-
-function renderSummary(){
-  const total=state.users.length;
-  const days=dateList(), times=timeList();
-  let allSlots=[], max=0, maxSlots=[];
-  days.forEach(d=> times.forEach(m=>{
-    const key=slotKey(d,m); const {c}=countAt(key);
-    if(c>max){ max=c; maxSlots=[key]; } else if(c===max && c>0){ maxSlots.push(key); }
-    if(total>0 && c===total) allSlots.push(key);
-  }));
-  const fmt=k=>{ const [dt,tm]=k.split("T"); const d=new Date(dt+"T00:00"); return dLabel(d)+" "+tm; };
-  const sum=document.getElementById("summary"); sum.innerHTML="";
-  const best=document.getElementById("bestLine");
-  if(total===0){ best.textContent="참가자를 추가하세요."; return; }
-  if(allSlots.length){
-    best.innerHTML=`전원(${total}명) 가능한 시간이 <b>${allSlots.length}개</b> 있습니다:`;
-    allSlots.forEach(k=>{ const s=document.createElement("span"); s.className="slot"; s.textContent=fmt(k); sum.appendChild(s); });
-  } else {
-    best.innerHTML=`아직 전원 가능한 시간이 없습니다. 현재 최다 <b>${max}/${total}명</b> 가능한 시간:`;
-    maxSlots.forEach(k=>{ const s=document.createElement("span"); s.className="slot"; s.style.background="#6b7280"; s.textContent=fmt(k); sum.appendChild(s); });
+// ===== 이 DATA는 Notion DB 스냅샷입니다. 동기화 시 이 부분만 교체됩니다. =====
+const DATA = {
+  snapshot: "2026-06-16 18:00",
+  event: { name: "예시 · Morlow 모임 (지우고 사용하세요)", range: "2026-06-20 ~ 2026-06-22" },
+  participants: [
+    { name: "정규", color: "#2563eb" },
+    { name: "민지", color: "#dc2626" },
+    { name: "현우", color: "#d97706" }
+  ],
+  blocks: ["오전", "오후", "저녁"],
+  days: [
+    { date: "2026-06-20", label: "6/20(토)" },
+    { date: "2026-06-21", label: "6/21(일)" },
+    { date: "2026-06-22", label: "6/22(월)" }
+  ],
+  slots: {
+    "2026-06-20|저녁": ["정규"],
+    "2026-06-21|오후": ["정규", "민지"],
+    "2026-06-21|저녁": ["정규", "민지", "현우"],
+    "2026-06-22|저녁": ["민지"]
   }
-}
+};
+// ===========================================================================
 
-function renderLegend(){
-  const total=Math.max(state.users.length,1);
-  const el=document.getElementById("legendScale"); el.innerHTML="";
-  for(let c=1;c<=total;c++){ const i=document.createElement("i"); const a=0.12+0.73*(c/total); i.style.background=`rgba(22,163,74,${a.toFixed(3)})`; el.appendChild(i); }
-}
+(function(){
+  const total = DATA.participants.length;
+  document.getElementById("snap").textContent = "Notion DB 반영 · 스냅샷: " + DATA.snapshot;
+  document.getElementById("evt").innerHTML = "<b>" + esc(DATA.event.name) + "</b> · 기간 " + esc(DATA.event.range) + " · 참가자 " + total + "명";
+  const uc = document.getElementById("users");
+  DATA.participants.forEach(p=>{ const d=document.createElement("div"); d.className="user-chip"; d.innerHTML='<span class="dot" style="background:'+p.color+'"></span>'+esc(p.name); uc.appendChild(d); });
 
-function renderAll(){ renderUsers(); paintEditGrid(); paintHeatGrid(); renderSummary(); renderLegend(); }
-
-// ---- drag interaction ----
-let painting=false, paintMode="add";
-function applyCell(td){
-  if(!td || !td.dataset.key) return;
-  const uid=state.activeUser; if(!uid) return;
-  state.avail[uid]=state.avail[uid]||[];
-  const key=td.dataset.key; const idx=state.avail[uid].indexOf(key);
-  if(paintMode==="add" && idx<0) state.avail[uid].push(key);
-  if(paintMode==="remove" && idx>=0) state.avail[uid].splice(idx,1);
-  paintEditGrid();
-}
-function initDrag(){
-  const grid=document.getElementById("editGrid");
-  grid.addEventListener("mousedown", e=>{
-    const td=e.target.closest("td.cell"); if(!td) return;
-    e.preventDefault();
-    paintMode = setHas(state.activeUser, td.dataset.key) ? "remove" : "add";
-    painting=true; applyCell(td);
+  const g = document.getElementById("grid");
+  let html = "<thead><tr><th></th>";
+  DATA.days.forEach(d=> html+="<th>"+d.label+"</th>");
+  html += "</tr></thead><tbody>";
+  DATA.blocks.forEach(b=>{
+    html += "<tr><td class='lbl'>"+b+"</td>";
+    DATA.days.forEach(d=>{
+      const key = d.date+"|"+b;
+      const av = DATA.slots[key];
+      if(!av){ html += "<td class='cell na'></td>"; return; }
+      const c = av.length;
+      const alpha = (0.12 + 0.73*(c/total)).toFixed(3);
+      const all = (c===total && total>0) ? " all" : "";
+      html += "<td class='cell"+all+"' style='background:rgba(22,163,74,"+alpha+")' title='"+esc(av.join(', '))+" ("+c+"/"+total+")'>"
+            + "<span class='cnt'>"+c+"</span><div class='names'>"+esc(av.join(', '))+"</div></td>";
+    });
+    html += "</tr>";
   });
-  grid.addEventListener("mouseover", e=>{ if(!painting) return; const td=e.target.closest("td.cell"); if(td) applyCell(td); });
-  document.addEventListener("mouseup", ()=>{ if(painting){ painting=false; save(); paintHeatGrid(); renderSummary(); } });
-  // touch
-  grid.addEventListener("touchstart", e=>{
-    const td=e.target.closest("td.cell"); if(!td) return; e.preventDefault();
-    paintMode = setHas(state.activeUser, td.dataset.key) ? "remove" : "add";
-    painting=true; applyCell(td);
-  }, {passive:false});
-  grid.addEventListener("touchmove", e=>{
-    if(!painting) return; e.preventDefault();
-    const t=e.touches[0]; const el=document.elementFromPoint(t.clientX,t.clientY);
-    const td=el&&el.closest?el.closest("td.cell"):null; if(td) applyCell(td);
-  }, {passive:false});
-  document.addEventListener("touchend", ()=>{ if(painting){ painting=false; save(); paintHeatGrid(); renderSummary(); } });
-}
+  html += "</tbody>";
+  g.innerHTML = html;
 
-// ---- actions ----
-function addUser(){
-  const inp=document.getElementById("newUser"); const name=inp.value.trim(); if(!name) return;
-  const id="u"+Date.now();
-  const used=state.users.map(u=>u.color);
-  const color=COLORS.find(c=>!used.includes(c)) || COLORS[state.users.length%COLORS.length];
-  state.users.push({id,name,color}); state.activeUser=id; inp.value=""; save(); renderAll();
-}
-function removeUser(id){
-  if(!confirm("이 참가자와 응답을 삭제할까요?")) return;
-  state.users=state.users.filter(u=>u.id!==id); delete state.avail[id];
-  if(state.activeUser===id) state.activeUser=state.users[0]?state.users[0].id:null;
-  save(); renderAll();
-}
-function setMode(m){ state.mode=m; document.getElementById("mHeat").classList.toggle("on",m==="heat"); document.getElementById("mUser").classList.toggle("on",m==="user"); save(); paintHeatGrid(); }
-function applyConfig(){
-  state.config.startDate=document.getElementById("startDate").value;
-  state.config.endDate=document.getElementById("endDate").value;
-  state.config.startHour=Number(document.getElementById("startHour").value);
-  state.config.endHour=Number(document.getElementById("endHour").value);
-  state.config.slotMin=document.getElementById("slotMin").value;
-  save(); rebuild();
-}
-function resetAll(){ if(!confirm("모든 데이터를 초기화할까요?")) return; localStorage.removeItem(LS_KEY); state=seed(); syncConfigInputs(); rebuild(); }
-function syncConfigInputs(){
-  document.getElementById("startDate").value=state.config.startDate;
-  document.getElementById("endDate").value=state.config.endDate;
-  document.getElementById("startHour").value=state.config.startHour;
-  document.getElementById("endHour").value=state.config.endHour;
-  document.getElementById("slotMin").value=state.config.slotMin;
-}
-function rebuild(){ buildGrid(document.getElementById("editGrid"),true); buildGrid(document.getElementById("heatGrid"),false); renderAll(); }
-function escapeHtml(s){ return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  const lg = document.getElementById("legend");
+  for(let c=1;c<=total;c++){ const i=document.createElement("i"); i.style.background="rgba(22,163,74,"+(0.12+0.73*(c/total)).toFixed(3)+")"; lg.appendChild(i); }
 
-// ---- init ----
-syncConfigInputs();
-buildGrid(document.getElementById("editGrid"),true);
-buildGrid(document.getElementById("heatGrid"),false);
-initDrag();
-renderAll();
+  let all=[], max=0, maxK=[];
+  Object.keys(DATA.slots).forEach(k=>{ const c=DATA.slots[k].length; if(c>max){max=c;maxK=[k];}else if(c===max&&c>0)maxK.push(k); if(total>0&&c===total)all.push(k); });
+  const fmt = k=>{ const [date,b]=k.split("|"); const d=DATA.days.find(x=>x.date===date); return (d?d.label:date)+" "+b; };
+  const best=document.getElementById("best"), sum=document.getElementById("summary");
+  if(all.length){ best.innerHTML="전원("+total+"명) 가능한 시간이 <b>"+all.length+"개</b> 있습니다:"; all.forEach(k=>{const s=document.createElement("span");s.className="slot";s.textContent=fmt(k);sum.appendChild(s);}); }
+  else if(max>0){ best.innerHTML="아직 전원 가능한 시간이 없습니다. 현재 최다 <b>"+max+"/"+total+"명</b>:"; maxK.forEach(k=>{const s=document.createElement("span");s.className="slot";s.style.background="#6b7280";s.textContent=fmt(k);sum.appendChild(s);}); }
+  else { best.innerHTML="<span class='none'>아직 응답이 없습니다.</span>"; }
+
+  document.getElementById("srcnote").textContent = "출처: Notion ③ 참가자 응답 · 입력은 폼에서, 결과는 여기에 반영됩니다.";
+
+  function esc(s){ return String(s).replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+})();
 </script>
 </body>
 </html>
