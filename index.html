@@ -20,14 +20,16 @@ h1 { font-size: 20px; margin: 0 0 4px; }
 .user-chip .dot { width:12px; height:12px; border-radius:50%; }
 .scroll { overflow-x:auto; }
 table.cal { border-collapse: collapse; }
-table.cal th { font-size:12px; color:#6b7280; font-weight:600; padding:6px 10px; text-align:center; white-space:nowrap; }
-table.cal td.lbl { font-size:12px; color:#6b7280; text-align:right; padding:0 10px; white-space:nowrap; }
-table.cal td.cell { width:120px; height:46px; border:1px solid #e5e7eb; position:relative; vertical-align:middle; text-align:center; }
-table.cal td.cell.na { background:repeating-linear-gradient(45deg,#fafafa,#fafafa 6px,#f1f1f1 6px,#f1f1f1 12px); }
-.cell .names { font-size:11px; color:#14532d; line-height:1.3; padding:2px 4px; }
-.cell .cnt { position:absolute; right:4px; top:2px; font-size:10px; font-weight:700; color:#14532d; opacity:.65; }
+table.cal th { font-size:12px; color:#6b7280; font-weight:600; padding:6px 12px; text-align:center; white-space:nowrap; }
+table.cal td.lbl { font-size:11px; color:#6b7280; text-align:right; padding:0 10px; white-space:nowrap; }
+table.cal td.lbl.hh { color:#111827; font-weight:600; border-top:1px solid #d1d5db; }
+table.cal td.cell { width:140px; height:22px; border:1px solid #eef0f2; position:relative; vertical-align:middle; text-align:center; }
+table.cal td.cell.hh { border-top:1px solid #d1d5db; }
+table.cal td.cell.na { background:repeating-linear-gradient(45deg,#fafafa,#fafafa 5px,#f2f2f2 5px,#f2f2f2 10px); }
+.cell .names { font-size:10px; color:#14532d; line-height:1.2; padding:0 4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.cell .cnt { position:absolute; right:3px; top:1px; font-size:9px; font-weight:700; color:#14532d; opacity:.6; }
 .cell.all { outline:2px solid #f59e0b; outline-offset:-2px; }
-.cell.all::after { content:"★"; position:absolute; left:4px; top:1px; font-size:11px; color:#f59e0b; }
+.cell.all::after { content:"★"; position:absolute; left:3px; top:0; font-size:10px; color:#f59e0b; }
 .legend { display:flex; align-items:center; gap:10px; margin-top:12px; font-size:12px; color:#6b7280; flex-wrap:wrap; }
 .legend .scale { display:flex; }
 .legend .scale i { width:24px; height:16px; display:inline-block; border:1px solid #e5e7eb; }
@@ -40,7 +42,7 @@ table.cal td.cell.na { background:repeating-linear-gradient(45deg,#fafafa,#fafaf
 </head>
 <body>
 <h1>🥬 Morlow 일정관리 — 팀 가능시간 (집계 결과)</h1>
-<p class="sub">📌 <b>보기 전용</b> 화면입니다. 입력은 Notion <b>③ 참가자 응답 폼</b>에서 하세요 — 제출하면 이 결과에 반영됩니다.</p>
+<p class="sub">📌 <b>보기 전용</b> 화면입니다. 입력은 Notion <b>③ 참가자 응답 폼</b>에서 하세요 — 제출하면 이 결과에 반영됩니다. (30분 단위)</p>
 <span class="snap" id="snap"></span>
 
 <div class="panel">
@@ -49,7 +51,7 @@ table.cal td.cell.na { background:repeating-linear-gradient(45deg,#fafafa,#fafaf
 </div>
 
 <div class="panel">
-  <h2>📅 겹침 히트맵 (초록이 진할수록 많은 인원, ★ = 전원 가능)</h2>
+  <h2>📅 겹침 히트맵 · 30분 단위 (초록이 진할수록 많은 인원, ★ = 전원 가능)</h2>
   <div class="scroll"><table class="cal" id="grid"></table></div>
   <div class="legend"><span>적음</span><span class="scale" id="legend"></span><span>전원</span><span style="margin-left:8px;">★ = 전원 가능</span></div>
 </div>
@@ -62,34 +64,39 @@ table.cal td.cell.na { background:repeating-linear-gradient(45deg,#fafafa,#fafaf
 </div>
 
 <script>
-// ===== 이 DATA는 Notion DB 스냅샷입니다. 동기화 시 이 부분만 교체됩니다. =====
+// ===== Notion DB 스냅샷. 동기화 시 이 DATA만 교체됩니다. =====
 const DATA = {
-  snapshot: "2026-06-16 18:00",
-  event: { name: "예시 · Morlow 모임 (지우고 사용하세요)", range: "2026-06-20 ~ 2026-06-22" },
+  snapshot: "2026-06-16 19:00",
+  event: { name: "예시 · Morlow 모임 (지우고 사용하세요)", range: "2026-06-21" },
   participants: [
     { name: "정규", color: "#2563eb" },
     { name: "민지", color: "#dc2626" },
     { name: "현우", color: "#d97706" }
   ],
-  blocks: ["오전", "오후", "저녁"],
+  // 표시 시간 범위 (30분 단위)
+  startHour: 0,
+  endHour: 12,   // 00:00 ~ 11:59 (마지막 11:30)
   days: [
-    { date: "2026-06-20", label: "6/20(토)" },
-    { date: "2026-06-21", label: "6/21(일)" },
-    { date: "2026-06-22", label: "6/22(월)" }
+    { date: "2026-06-21", label: "6/21(일)" }
   ],
+  // slots: "YYYY-MM-DD|HH:MM" -> [가능한 사람]
   slots: {
-    "2026-06-20|저녁": ["정규"],
-    "2026-06-21|오후": ["정규", "민지"],
-    "2026-06-21|저녁": ["정규", "민지", "현우"],
-    "2026-06-22|저녁": ["민지"]
+    "2026-06-21|09:00": ["정규"],
+    "2026-06-21|09:30": ["정규", "민지"],
+    "2026-06-21|10:00": ["정규", "민지", "현우"],
+    "2026-06-21|10:30": ["민지"]
   }
 };
-// ===========================================================================
+// ===========================================================
 
 (function(){
   const total = DATA.participants.length;
+  const pad = n => String(n).padStart(2,"0");
+  const times = [];
+  for(let m = DATA.startHour*60; m < DATA.endHour*60; m += 30) times.push(pad(Math.floor(m/60))+":"+pad(m%60));
+
   document.getElementById("snap").textContent = "Notion DB 반영 · 스냅샷: " + DATA.snapshot;
-  document.getElementById("evt").innerHTML = "<b>" + esc(DATA.event.name) + "</b> · 기간 " + esc(DATA.event.range) + " · 참가자 " + total + "명";
+  document.getElementById("evt").innerHTML = "<b>"+esc(DATA.event.name)+"</b> · 날짜 "+esc(DATA.event.range)+" · 참가자 "+total+"명";
   const uc = document.getElementById("users");
   DATA.participants.forEach(p=>{ const d=document.createElement("div"); d.className="user-chip"; d.innerHTML='<span class="dot" style="background:'+p.color+'"></span>'+esc(p.name); uc.appendChild(d); });
 
@@ -97,16 +104,17 @@ const DATA = {
   let html = "<thead><tr><th></th>";
   DATA.days.forEach(d=> html+="<th>"+d.label+"</th>");
   html += "</tr></thead><tbody>";
-  DATA.blocks.forEach(b=>{
-    html += "<tr><td class='lbl'>"+b+"</td>";
+  times.forEach(t=>{
+    const hh = t.endsWith(":00") ? " hh" : "";
+    html += "<tr><td class='lbl"+hh+"'>"+t+"</td>";
     DATA.days.forEach(d=>{
-      const key = d.date+"|"+b;
+      const key = d.date+"|"+t;
       const av = DATA.slots[key];
-      if(!av){ html += "<td class='cell na'></td>"; return; }
+      if(!av){ html += "<td class='cell na"+hh+"'></td>"; return; }
       const c = av.length;
       const alpha = (0.12 + 0.73*(c/total)).toFixed(3);
       const all = (c===total && total>0) ? " all" : "";
-      html += "<td class='cell"+all+"' style='background:rgba(22,163,74,"+alpha+")' title='"+esc(av.join(', '))+" ("+c+"/"+total+")'>"
+      html += "<td class='cell"+hh+all+"' style='background:rgba(22,163,74,"+alpha+")' title='"+esc(av.join(', '))+" ("+c+"/"+total+")'>"
             + "<span class='cnt'>"+c+"</span><div class='names'>"+esc(av.join(', '))+"</div></td>";
     });
     html += "</tr>";
@@ -119,13 +127,13 @@ const DATA = {
 
   let all=[], max=0, maxK=[];
   Object.keys(DATA.slots).forEach(k=>{ const c=DATA.slots[k].length; if(c>max){max=c;maxK=[k];}else if(c===max&&c>0)maxK.push(k); if(total>0&&c===total)all.push(k); });
-  const fmt = k=>{ const [date,b]=k.split("|"); const d=DATA.days.find(x=>x.date===date); return (d?d.label:date)+" "+b; };
+  const fmt = k=>{ const [date,t]=k.split("|"); const d=DATA.days.find(x=>x.date===date); return (d?d.label:date)+" "+t; };
   const best=document.getElementById("best"), sum=document.getElementById("summary");
-  if(all.length){ best.innerHTML="전원("+total+"명) 가능한 시간이 <b>"+all.length+"개</b> 있습니다:"; all.forEach(k=>{const s=document.createElement("span");s.className="slot";s.textContent=fmt(k);sum.appendChild(s);}); }
+  if(all.length){ best.innerHTML="전원("+total+"명) 가능한 시간이 <b>"+all.length+"개</b> 있습니다:"; all.sort().forEach(k=>{const s=document.createElement("span");s.className="slot";s.textContent=fmt(k);sum.appendChild(s);}); }
   else if(max>0){ best.innerHTML="아직 전원 가능한 시간이 없습니다. 현재 최다 <b>"+max+"/"+total+"명</b>:"; maxK.forEach(k=>{const s=document.createElement("span");s.className="slot";s.style.background="#6b7280";s.textContent=fmt(k);sum.appendChild(s);}); }
   else { best.innerHTML="<span class='none'>아직 응답이 없습니다.</span>"; }
 
-  document.getElementById("srcnote").textContent = "출처: Notion ③ 참가자 응답 · 입력은 폼에서, 결과는 여기에 반영됩니다.";
+  document.getElementById("srcnote").textContent = "출처: Notion ③ 참가자 응답 · 입력은 폼(날짜=캘린더, 시간=30분 드롭다운)에서, 결과는 여기에 반영됩니다.";
 
   function esc(s){ return String(s).replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 })();
